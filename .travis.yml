@@ -1,0 +1,9 @@
+language: julia
+julia:
+  - release
+  - nightly
+matrix:
+  allow_failures:
+    - julia: nightly
+script:
+  - julia -e 'include("startup.jl"); include("test/runtests.jl")'
