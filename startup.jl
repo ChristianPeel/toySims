@@ -3,6 +3,7 @@
 
 #Pkg.add("PyPlot")
 Pkg.add("CPUTime")
+Pkg.add("JSON")
 Pkg.add("SortingAlgorithms")
 
 #using PyPlot
