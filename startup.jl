@@ -1,11 +1,11 @@
 
-@printf("Entering startup.jl in %s\n",pwd())
+@printf("Entering startup.jl in toySims\n")
 
-Pkg.add("PyPlot")
+#Pkg.add("PyPlot")
 Pkg.add("CPUTime")
 Pkg.add("SortingAlgorithms")
 
-using PyPlot
+#using PyPlot
 using CPUTime
 
 # Used in the sortToys subdirectory

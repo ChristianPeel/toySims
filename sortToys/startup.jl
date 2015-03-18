@@ -1,4 +1,4 @@
 
-@printf("Entering startup.jl in %s\n",pwd())
+@printf("Entering startup.jl in toySims/sortToys\n")
 
 include("../startup.jl")
