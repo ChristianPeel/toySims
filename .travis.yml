@@ -2,4 +2,4 @@ language: julia
 notifications:
     email: false
 script:
-  - julia -e 'include("startup.jl"); include("test/perf.jl")'
+  - julia -e 'include("startup.jl"); include("test/perf.jl")' codespeed
