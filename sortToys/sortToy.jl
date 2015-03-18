@@ -1,37 +1,39 @@
-function sortToy(Ns::Int,N::Array{Int,1},L::Array{Int,1},dataType::Array{DataType,1},distType)
-#sortToy
-#  Do Monte-Carlo sims of sorting techniques. N data points of type
-#  dataType and width L comprise each set of data to be sorted. Ns
-#  different sets are timed, with the average time shown.
+# @doc doc"""sortToy(Ns,N,L,dataType,distType)
+#   Do Monte-Carlo sims of sorting techniques. N data points of type
+#   dataType and width L comprise each set of data to be sorted. Ns
+#   different sets are timed, with the average time shown.  Accepted
+#   datatypes include Integer types such as Int8,Int128; FloatingPoint types
+#   such as Float32 and Float64, and String. Accepted distTypes are
+#   "random" (uniformly distributed), "sorted" (previously sorted data),
+#   "reverse" (previously reverse sorted), "rand4" (uniform over 4 values),
+#   "sortedW10rand" (sorted with 10 random values), and "randn" (normally
+#   distributed, only for floats).  All the default sort algorithms and
+#   those in "SortingAlgorithms" are compared, as is the default sort.
 #
 # Examples
-#  # As function of Integer width
-#  sortToy(40,2.^[10;],[40;],[Int8,Int16,Int32,Int64,Int128],"random")
-#  # As function of N, with data sorted in reverse, Tim is best
-#  sortToy(40,2.^[2:10;],[10;],[AbstractString],"reverse")
-#  # As function of N, with data sorted in reverse, Radix is best 
-#  sortToy(100,2.^[2:14;],[50;],[Int8],"random")
-
-#
+#   # As function of Integer width
+#   sortToy(40,2.^[10;],[40;],[Int8,Int16,Int32,Int64,Int128],\"random\")
+#   # As function of N, with data sorted in reverse, Tim is best
+#   sortToy(40,2.^[2:10;],[10;],[String],\"reverse\")
+#   # As function of N, with data sorted in reverse, Radix is best 
+#   sortToy(100,2.^[2:14;],[50;],[Int8],\"random\")
+# """
+function sortToy(Ns::Int,N::Array{Int,1},L::Array{Int,1},dataType::Array{DataType,1},distType)
 # By Christian Peel  (chris.peel@ieee.org)
-# Last Modified: Mon 9 Mar 15, 10:09pm by peel
+# Last Modified: Sun 15 Mar 15, 8:26pm by peel
 
-# using PyPlot
-# Pkg.add("SortingAlgorithms")
-# using CPUTime
+# See "startup.jl" in this directory for packages that need to be
+# loaded for the sortToy function to work. These packages inclue
+# PyPlot, CPUTime, and SortingAlgorithms
     
-# import Base.Sort: QuickSort, MergeSort, InsertionSort
-# using SortingAlgorithms #Provides HeapSort, RadixSort, TimSort
-
+# From Base.Sort: QuickSort, MergeSort, InsertionSort
+# From SortingAlgorithms: HeapSort, RadixSort, TimSort
 sorts = ["Heap", "Radix", "Tim", "Quick", "Merge", "Default","Insertion"]
 if any(N.>1024)
     sorts = sorts[sorts.!="Insertion"];
 end
 
 println("      Ns      M      L   dataType")
-
-# Not using the following 'getAlgs()' method because it doesn't allow
-# me to easily plot genie-aided receivers.
 
 out = cell(0)
 if length(N)>1
@@ -71,24 +73,13 @@ times = zeros(Nout);
 for a=1:length(out[1][2])
     for k=1:Nout
         times[k] = out[k][1][a];
-#        mi(k) = out(k).mi(a);
     end
-#    figure(1)
-#println(" finished times")
     plotfun(xval,times,pColor[pIdx],label=out[1][2][a]);
-    #semilogy(xval,times,pColor[pIdx],label=out[1][2][a]);
     hold(true);
-##     figure(2)
-##     plot(xval,mi,pColor[pIdx]);  hold(true);
-    if pIdx == length(pColor)
-         pIdx = 1;
-    else
-         pIdx = pIdx + 1;
-    end
+    pIdx = pIdx==length(pColor)? 1: pIdx + 1;
 end
-
 hold(false);
-##figure(1)
+
 xlabel(xlab);
 ylabel("execution time");
 legend(loc=2);
@@ -101,7 +92,8 @@ end
 
 #######################################################################
 function sortSim(Ns,N,L,dataType,distType,sorts)
-sortDict = Dict("Insertion" => d->sort(d,alg=InsertionSort),
+# sortDict = Dict("Insertion" => d->sort(d,alg=InsertionSort),
+sortDict =     {"Insertion" => d->sort(d,alg=InsertionSort),
                    # Worst with large N, ok for small
                 "Quick"     => d->sort(d,alg=QuickSort),
                    # 
@@ -110,20 +102,25 @@ sortDict = Dict("Insertion" => d->sort(d,alg=InsertionSort),
                 "Radix"     => d->sort(d,alg=RadixSort),
                    # Best for Int8,largeN, worst with small N
                 "Tim"       => d->sort(d,alg=TimSort),
-                   # Best w sorted||reverse sorted AbstractString, large N
-                "Default"   => d->sort(d)); 
+                   # Best w sorted||reverse sorted String, large N
+                "Default"   => d->sort(d)}; 
 
 if dataType<:Integer
     randfn! = d -> rand!(d, 1:L);
-elseif dataType<:AbstractString
+elseif dataType<:String
     sorts = sorts[sorts.!="Radix"];
+    # I thought for a time that randstring was slow, and was increasing too
+    # fast with L, but I guess that I can't compare the way I'm using L for
+    # strings with how it's used for floats or ints.
     randfn! = d -> (for i = 1:length(d); d[i] = randstring(L); end; d);
 elseif dataType<:FloatingPoint
     randfn! = d -> L*rand!(d::AbstractArray{dataType,1});
 else
     error("Unknown Type $string(dataType)")
 end
-distDict = Dict("random"=> randfn!,
+#distDict = Dict("random"=> randfn!,
+distDict =     {"random"=> randfn!,
+                "randn"=> d->randn!(d),
                 "sorted"=> d -> begin
                         randfn!(d);
                         sort!(d);
@@ -136,7 +133,7 @@ distDict = Dict("random"=> randfn!,
                 "ones"=> d -> ones(d),
                 "rand4"=> d -> begin
                         randfn!(d);
-                        data4=data[rand(1:4,N)]
+                        data4=d[rand(1:4,N)]
                     end,
                 "sortedW10rand"=> d -> begin
                         randfn!(d);
@@ -144,7 +141,7 @@ distDict = Dict("random"=> randfn!,
                         d[end-9:end] = randfn!(Array(dataType,10));
                         return d
                     end,
-                );
+                };
 randf! = distDict[distType];
 
 Nsort = length(sorts);

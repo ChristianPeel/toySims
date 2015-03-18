@@ -13,7 +13,7 @@ function mimoUPtoy(Ns::Int64,Mc::Int64,M::Int64,K::Int64,
 #  If gamma is present, it is a CIR. If delta is present, it is
 #  the pilot boost in db.
 #
-# Examples show SER as we deviate away from LTE PUSCH defaults
+# Examples show SER
 #  # Performance as a function of SNR
 #  mimoUPtoy(400,4,4,2,0,12,12,[-5.0:5:20])
 #  # Performance as a function of CIR
@@ -34,18 +34,21 @@ function mimoUPtoy(Ns::Int64,Mc::Int64,M::Int64,K::Int64,
 # By Christian Peel  (chris.peel@ieee.org)
 # Last Modified: Fri 14 Nov 14, 11:57am by cpeel
 
-#using PyPlot
+# using PyPlot
 
 println("   Mc     M     K    Ki    Tt    Td   rho  gamma")
 
-#algs = getAlgs()
-algs = []
+# Not using the following 'getAlgs()' method because it doesn't allow
+# me to easily plot genie-aided receivers.
 
+algs = getAlgs()
 # It would be great to print out the alg names here
-#for ax = 1:min(length(algs),4)
-#    @printf("%10s ",algs[ax][2])
-#end
-#println
+# for ax = 1:min(length(algs),4)
+#     @printf("%10s ",algs[ax][2])
+# end
+# println
+
+#algs = []
 
 
 out = cell(0)
@@ -226,14 +229,14 @@ SSi = sign(rand(Ki,Tt,Ns)-.5)/sqrt(Tt);
 onesKT = ones(K,Td);
 #eye2KTd = repmat(eye(2*K),[1 1 Td]);
 #eye2KaTd = repmat(eye(2*Ka),[1 1 Td]);
-ri = [1:K]';
-ii = [(K+1):(2*K)]';
-ria = [1:K]';
-iia = [(Ka+1):(Ka+K)]';
+ri = [1:K;]';
+ii = [(K+1):(2*K);]';
+ria = [1:K;]';
+iia = [(Ka+1):(Ka+K);]';
 
 
-#Nalgs = length(algs);
-Nalgs = 4;
+Nalgs = length(algs);
+#Nalgs = 2;
 ZD = zeros(K,Td*Ns,Nalgs);
 algNames = cell(Nalgs)
 
@@ -247,8 +250,6 @@ for ix = 1:Ns
 #    Sd = fft(Sd,[],2)/sqrt(Td);
     S = [Sti Sd];
     H = HH[:,:,ix];
-#println(H)
-#println(Sd[:,1:2])
     
     Y = H*S+N; # Channel
     Yt = Y[:,1:Tt];
@@ -265,61 +266,37 @@ for ix = 1:Ns
     #
     Hhat = Yt*St'*inv(St*St');
     Hhatc = [real(Hhat) -imag(Hhat); imag(Hhat) real(Hhat)];
-    #
-    # additional Training
-    #
-    Hhat2= Hhat;
-    #
-    What = (Yt-Hhat2*St);
-    Rhat = What*What';
-    var2hat = sum(diag(Rhat))/(Tt-1)/M;
-    powhat = sum(diag(Hhat2*Hhat2'))/K/M;
-    Hhat2 = Yt*St'*inv(St*St'+ I*var2hat/powhat*10);
     
     #
     # Receiver algorithms
     #
-#    for ax = 1:Nalgs
-#        (Zd,name) = algs[ax](Yt,St,Yd,C,onesKT);
-#        ZD[:,zix,ax] = Zd;
-#        algNames[ax] = name;
-#    end
+    for ax = 1:Nalgs
+        (Zd,name) = algs[ax](Yt,St,Yd,C,onesKT);
+        ZD[:,zix,ax] = Zd;
+        algNames[ax] = name;
+    end
 
 
-    ax=0;
+    # ax=0;
 
-    ax = ax+1;
-    algNames[ax] = "ZF";
-    Hhat = Yt*St'*inv(St*St');
-    Wls = Hhat/(Hhat'*Hhat);
-    Zd  = mimo_slice(Wls'*Yd,onesKT,C);
-    ZD[:,zix,ax] = Zd;
+    # # Showing some toy example receivers
 
-    ax = ax+1;
-    algNames[ax] = "MF";
-    Hhat = Yt*St'*inv(St*St');
-    Wls = Hhat;
-    Zd  = mimo_slice(Wls'*Yd,onesKT,C);
-    ZD[:,zix,ax] = Zd;
+    # ax = ax+1;
+    # algNames[ax] = "ZF";
+    # Hhat = Yt*St'*inv(St*St');
+    # Wls = Hhat/(Hhat'*Hhat);
+    # Zd  = mimo_slice(Wls'*Yd,onesKT,C);
+    # ZD[:,zix,ax] = Zd;
 
-
-    ax = ax+1;
-    algNames[ax] = "genie "* L"\sigma^2";
-    Wls = Hhat/(Hhat'*Hhat+ sigmaSq*I);
-    Zls = Wls'*Yd;
-##    Zls = ifft(Zls,[],2)*sqrt(Td);
-    Zd = mimo_slice(Zls,onesKT,C);
-    ZD[:,zix,ax] = Zd;
-
-    ax = ax+1;
-    algNames[ax] = "IC";
-    Hhat = (Yt*St')/(St*St');
-    Wp = Yt-Hhat*St;   # To be used to estimate the noise variance
-    Rhat = Wp*Wp'/(max(Tt-K,1)*M);
-    Ri = inv(Rhat);
-    W = Ri*Hhat/(Hhat'*Ri*Hhat);
-    Zd = mimo_slice(W'*Yd,W'*Hhat*onesKT,C);
-    ZD[:,zix,ax] = Zd;
+    # ax = ax+1;
+    # algNames[ax] = "IC";
+    # Hhat = (Yt*St')/(St*St');
+    # Wp = Yt-Hhat*St;   # To be used to estimate the noise variance
+    # Rhat = Wp*Wp'/(max(Tt-K,1)*M);
+    # Ri = inv(Rhat);
+    # W = Ri*Hhat/(Hhat'*Ri*Hhat);
+    # Zd = mimo_slice(W'*Yd,W'*Hhat*onesKT,C);
+    # ZD[:,zix,ax] = Zd;
 
 
 end
@@ -387,7 +364,7 @@ elseif Ctype=="QAM"
     # Make QAM constellations if M is a square
     m = integer(sqrt(M))
     C = complex(zeros(m,m))
-    Cr = complex([-(m-1):2:(m-1)])
+    Cr = complex([-(m-1):2:(m-1);])
     for ix = 1:m
       for jx = 1:m
         C[jx,ix] = Cr[ix] +im*Cr[jx];
