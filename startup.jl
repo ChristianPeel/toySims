@@ -1,6 +1,10 @@
 
 @printf("Entering startup.jl in %s\n",pwd())
 
+Pkg.add("PyPlot")
+Pkg.add("CPUTime")
+Pkg.add("SortingAlgorithms")
+
 using PyPlot
 using CPUTime
 
