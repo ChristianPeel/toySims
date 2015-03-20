@@ -15,12 +15,14 @@
 #   sortToy(40,2.^[10;],[40;],[Int8,Int16,Int32,Int64,Int128],\"random\")
 #   # As function of N, with data sorted in reverse, Tim is best
 #   sortToy(40,2.^[2:10;],[10;],[String],\"reverse\")
-#   # As function of N, with data sorted in reverse, Radix is best 
+#   # As function of N, with random data, Radix is best 
 #   sortToy(100,2.^[2:14;],[50;],[Int8],\"random\")
+#   # As function of L, with floats sorted in reverse, Radix is best 
+#   sortToy(100,2.^[8;],[4:100:2000;],[String],\"random\")
 # """
 function sortToy(Ns::Int,N::Array{Int,1},L::Array{Int,1},dataType::Array{DataType,1},distType)
 # By Christian Peel  (chris.peel@ieee.org)
-# Last Modified: Sun 15 Mar 15, 8:26pm by peel
+# Last Modified: Thu 19 Mar 15, 10:02pm by peel
 
 # See "startup.jl" in this directory for packages that need to be
 # loaded for the sortToy function to work. These packages inclue
@@ -33,7 +35,7 @@ if any(N.>1024)
     sorts = sorts[sorts.!="Insertion"];
 end
 
-println("      Ns      M      L   dataType")
+println("      Ns      N      L   dataType")
 
 out = cell(0)
 if length(N)>1
