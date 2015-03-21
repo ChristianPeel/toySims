@@ -5,7 +5,7 @@ codespeed = length(ARGS) > 0 && ARGS[1] == "codespeed"
 
 if codespeed
     using JSON
-#    using HTTPClient.HTTPC
+    using HTTPClient.HTTPC
 
     # Ensure that we've got the environment variables we want:
     # if !haskey(ENV, "JULIA_FLAVOR")
@@ -19,7 +19,9 @@ if codespeed
     csdata["project"] = "Julia"
     csdata["branch"] = Base.GIT_VERSION_INFO.branch
 #    csdata["executable"] = ENV["JULIA_FLAVOR"]
-    csdata["environment"] = chomp(readall(`hostname`))
+    csdata["executable"] = "TestExecutable"
+#    csdata["environment"] = chomp(readall(`hostname`))
+    csdata["environment"] = "TestEnvironment"
     csdata["result_date"] = join( split(Base.GIT_VERSION_INFO.date_string)[1:2], " " )    #Cut the timezone out
 end
 
@@ -27,7 +29,7 @@ end
 function submit_to_codespeed(vals,name,desc,unit,test_group,lessisbetter=true)
     # Points to the server
     #codespeed_host = "julia-codespeed.csail.mit.edu"
-    codespeed_host = "julia-codespeed"
+    codespeed_host = "codespeed.herokuapp.com"
 
     csdata["benchmark"] = name
     csdata["description"] = desc
@@ -40,12 +42,15 @@ function submit_to_codespeed(vals,name,desc,unit,test_group,lessisbetter=true)
     csdata["lessisbetter"] = lessisbetter
 
     println( "$name: $(mean(vals))" )
+    # v0.4?
     # ret = post( "http://$codespeed_host/result/add/json/", Dict("json" => json([csdata])) )
+    # v0.3?
+    ret = post( "http://$codespeed_host/result/add/json/", {"json" => json([csdata])} )
     println( json([csdata]) )
-    # if ret.http_code != 200 && ret.http_code != 202
-    #     error("Error submitting $name [HTTP code $(ret.http_code)], dumping headers and text: $(ret.headers)\n$(bytestring(ret.body))\n\n")
-    #     return false
-    # end
+    if ret.http_code != 200 && ret.http_code != 202
+        error("Error submitting $name [HTTP code $(ret.http_code)], dumping headers and text: $(ret.headers)\n$(bytestring(ret.body))\n\n")
+        return false
+    end
     return true
 end
 

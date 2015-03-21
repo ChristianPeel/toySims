@@ -1,12 +1,13 @@
 
 @printf("Entering startup.jl in toySims\n")
 
-#Pkg.add("PyPlot")
+Pkg.add("PyPlot")
 Pkg.add("CPUTime")
 Pkg.add("JSON")
 Pkg.add("SortingAlgorithms")
+Pkg.add("HTTPClient")
 
-#using PyPlot
+using PyPlot
 using CPUTime
 
 # Used in the sortToys subdirectory
