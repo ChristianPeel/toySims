@@ -6,7 +6,9 @@ codespeed = length(ARGS) > 0 && ARGS[1] == "codespeed"
 if codespeed
     using JSON
     using HTTPClient.HTTPC
+    using LibGit2
 
+    repo = GitRepo(".");
     # Ensure that we've got the environment variables we want:
     # if !haskey(ENV, "JULIA_FLAVOR")
     #     error( "You must provide the JULIA_FLAVOR environment variable identifying this julia build!" )
@@ -15,15 +17,18 @@ if codespeed
     # Setup codespeed data dict for submissions to codespeed's JSON endpoint.  These parameters
     # are constant across all benchmarks, so we'll just let them sit here for now
     csdata = Dict()
-#    csdata["commitid"] = Base.GIT_VERSION_INFO.commit
-    csdata["commitid"] = "6d7bfdb6bdc164665bf80c1cb715a67d13c1770b";
+    csdata["commitid"] = hex(LibGit2.revparse(repo,"HEAD"))
     csdata["project"] = "Julia"
     csdata["branch"] = Base.GIT_VERSION_INFO.branch
 #    csdata["executable"] = ENV["JULIA_FLAVOR"]
     csdata["executable"] = "TestExecutable"
 #    csdata["environment"] = chomp(readall(`hostname`))
+#    cpu = Sys.cpu_info();  # See other functions in Sys.[tab]
     csdata["environment"] = "TestEnvironment"
     csdata["result_date"] = join( split(Base.GIT_VERSION_INFO.date_string)[1:2], " " )    #Cut the timezone out
+
+    close(repo)
+    LibGit2.free!(repo)
 end
 
 # Takes in the raw array of values in vals, along with the benchmark name, description, unit and whether less is better
@@ -46,12 +51,12 @@ function submit_to_codespeed(vals,name,desc,unit,test_group,lessisbetter=true)
     # v0.4?
     # ret = post( "http://$codespeed_host/result/add/json/", Dict("json" => json([csdata])) )
     # v0.3?
-    ret = post( "http://$codespeed_host/result/add/json/", {"json" => json([csdata])} )
+#    ret = post( "http://$codespeed_host/result/add/json/", {"json" => json([csdata])} )
     println( json([csdata]) )
-    if ret.http_code != 200 && ret.http_code != 202
-        error("Error submitting $name [HTTP code $(ret.http_code)], dumping headers and text: $(ret.headers)\n$(bytestring(ret.body))\n\n")
-        return false
-    end
+    # if ret.http_code != 200 && ret.http_code != 202
+    #     error("Error submitting $name [HTTP code $(ret.http_code)], dumping headers and text: $(ret.headers)\n$(bytestring(ret.body))\n\n")
+    #     return false
+    # end
     return true
 end
 

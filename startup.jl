@@ -6,6 +6,7 @@ Pkg.add("CPUTime")
 Pkg.add("JSON")
 Pkg.add("SortingAlgorithms")
 Pkg.add("HTTPClient")
+Pkg.add("LibGit2")
 
 using PyPlot
 using CPUTime
