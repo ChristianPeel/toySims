@@ -1,3 +1,4 @@
 # toySims
 
-Some simple scripts in Matlab and Julia
+Some simple scripts in Matlab and Julia.
+
