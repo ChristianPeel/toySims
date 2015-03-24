@@ -96,7 +96,7 @@ macro timeit_init(ex,init,name,desc,group...)
         t = zeros(ntrials)
         for i=0:ntrials
             $(esc(init))
-            e = 1000*(@elapsed $(esc(ex)))
+            e = 1000*(@CPUelapsed $(esc(ex)))
             if i > 0
                 # warm up on first iteration
                 t[i] = e
