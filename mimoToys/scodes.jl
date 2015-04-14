@@ -9,7 +9,7 @@ function scodes(M,Ctype)
 #  QAM constellations
 
 # By Christian Peel  (chris.peel@ieee.org)
-# Last Modified: Fri 10 Apr 15, 10:58pm by peel
+# Last Modified: Sat 11 Apr 15, 10:31pm by peel
 #
 
 #if nargin==0
@@ -43,6 +43,7 @@ end
 C = C[:]; # Turn into column vector
 # for QAM, gam = sqrt(2/3*(M-1))
 gam = sqrt(C'*C/length(C));
+
 C = C/gam;
 #if nargout ==3
   Cr = Cr/gam;
@@ -51,6 +52,38 @@ C = C/gam;
 d2 = real(C[2:end]-C[1]);
 id = find(x->abs(x)>0,d2);
 d = minimum(abs(d2[id]));
-return C, d, Cr,gam
+return (C, d, Cr, gam)
+end
+
+#######################################################################
+function mimo_slice(Y,H,C)
+M = size(Y,1);
+Td = size(Y,2);
+Zd = zeros(M,Td);
+Mc = length(C);
+dy = zeros(M,Mc);
+for t=1:Td
+    for i = 1:Mc
+        dd = Y[:,t]-H[:,t]*C[i];
+        dy[:,i] = abs(dd).^2
+    end
+    for m = 1:M
+        (mn,zd) = findmin(dy[m,:],2);
+        Zd[m,t] = zd[1]-1.0;
+    end
+end
+return Zd
+end
+
+#################################################################
+function siso_demod(y,C)
+Mc = length(C);
+dy = zeros(Mc,1);
+for ix = 1:Mc
+    dy[ix] = abs(y[1]-C[ix])
+end
+(m,zd) = findmin(dy);
+sd = C[zd];
+return sd[1]
 end
 
